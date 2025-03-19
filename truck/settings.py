@@ -37,6 +37,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+     # Third-party apps
+    "rest_framework",
+    "oauth2_provider",
+
+    # custom apps
     'app_user'
 ]
 
@@ -70,6 +76,22 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'truck.wsgi.application'
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
+    ]
+}
+
+OAUTH2_PROVIDER = {
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 36000,  # Adjust token expiry if needed
+    'SCOPES': {'read': 'Read access', 'write': 'Write access'},
+    'ALLOWED_GRANT_TYPES': ['password', 'client_credentials', 'authorization_code', 'refresh_token'],
+}
 
 
 # Database
@@ -112,6 +134,8 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
+
+APPEND_SLASH = False
 
 
 # Static files (CSS, JavaScript, Images)
