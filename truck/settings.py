@@ -43,7 +43,8 @@ INSTALLED_APPS = [
     "oauth2_provider",
 
     # custom apps
-    'app_user'
+    'app_user',
+    'company'
 ]
 
 MIDDLEWARE = [
