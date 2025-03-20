@@ -1,4 +1,6 @@
 from rest_framework import permissions
+from .models import Company
+from django.shortcuts import get_object_or_404
 
 class IsCompanyAdmin(permissions.BasePermission):
     """
@@ -15,6 +17,29 @@ class IsDriverCompanyAdmin(permissions.BasePermission):
     """
     def has_object_permission(self, request, view, obj):
         if view.action in ["update", "partial_update", "destroy", "restore"]:
-            return request.user in obj.company.admins.all()  # Check if the user is an admin of the company for the driver
+            return request.user in obj.company.admins.all()
 
+        return request.method in permissions.SAFE_METHODS
+    
+
+class IsVehicleCompanyAdmin(permissions.BasePermission):
+    """Only company admins can update or delete vehicles."""
+
+    def has_object_permission(self, request, view, obj):
+        if view.action in ["update", "partial_update", "destroy", "make_operational", "assign_driver"]:
+            return request.user in obj.company.admins.all()
+        
         return request.method in permissions.SAFE_METHODS 
+    
+
+class UserIsCompanyAdmin(permissions.BasePermission):
+    """Only company admins can update or delete vehicles."""
+
+    def has_permission(self, request, view):
+        company_id = request.data.get("company")
+        if view.action in view.action in ["update", "partial_update", "create"] and company_id:
+            company = get_object_or_404(Company, pk=company_id)
+            return request.user in company.admins.all()
+
+        return True
+    

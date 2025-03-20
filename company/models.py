@@ -36,3 +36,18 @@ class DriverProfile(models.Model):
 
     def __str__(self):
         return self.user.get_full_name()
+
+class Vehicle(models.Model):
+    company = models.ForeignKey(Company, on_delete=models.CASCADE, related_name="vehicles")
+    drivers = models.ManyToManyField(DriverProfile, related_name="vehicles", blank=True)
+    truck_number = models.CharField(max_length=50, unique=True)
+    trailer_number = models.CharField(max_length=50, unique=True, null=True, blank=True)
+    license_plate = models.CharField(max_length=20, unique=True)
+    state_of_registration = models.CharField(max_length=50)
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+    operational = models.BooleanField(default=True)
+    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="vehicle_company_admin")
+
+    def __str__(self):
+        return f"{self.truck_number} - {self.license_plate} ({self.company.name})"

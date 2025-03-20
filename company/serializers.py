@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from .models import Company
 from .models import DriverProfile
+from .models import Vehicle
 
 User = get_user_model()
 
@@ -47,4 +48,48 @@ class DriverProfileSerializer(serializers.ModelSerializer):
         if DriverProfile.objects.filter(user=user, company=company).exists():
             raise serializers.ValidationError("This driver is already assigned to the company.")
 
-        return DriverProfile.objects.create(user=user, **validated_data)
+        return DriverProfile.objects.create(user=user, created_by=self.context["request"].user **validated_data)
+
+
+class VehicleSerializer(serializers.ModelSerializer):
+    drivers = serializers.PrimaryKeyRelatedField(
+        queryset=DriverProfile.objects.all(), many=True, required=False
+    )
+    company_admins = serializers.SerializerMethodField()
+    company = serializers.PrimaryKeyRelatedField(queryset=Company.objects.all())
+
+    class Meta:
+        model = Vehicle
+        fields = [
+            "id",
+            "company",
+            "drivers",
+            "company_admins",
+            "truck_number",
+            "trailer_number",
+            "license_plate",
+            "state_of_registration",
+            "operational",
+            "created_by",
+            "date_created",
+            "date_updated",
+        ]
+        read_only_fields = ["company_admins", "created_by", "date_created", "date_updated"]
+
+    def get_company_admins(self, obj):
+        """Returns a list of company admin IDs."""
+        return list(obj.company.admins.values_list("id", flat=True))
+
+    def create(self, validated_data):
+        operational = validated_data.pop("operational", True)
+        drivers = validated_data.pop("drivers", [])
+
+        if not operational:
+            raise serializers.ValidationError({"operational": "A vehicle must be created as operational."})
+
+        if drivers:
+            raise serializers.ValidationError({"drivers": "Driver assignments are done after creating a vehicle"})
+
+        validated_data["created_by"] = self.context["request"].user
+        
+        return Vehicle.objects.create(**validated_data) 
