@@ -17,28 +17,28 @@ class CompanySerializer(serializers.ModelSerializer):
 
 
 class DriverProfileSerializer(serializers.ModelSerializer):
-    email = serializers.EmailField(write_only=True)  # Accept email instead of user ID
-    full_name = serializers.SerializerMethodField()  # Get full name from User model
-    company = serializers.PrimaryKeyRelatedField(queryset=Company.objects.all())  # Ensure company is an ID
-    created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())  # Track who assigned the driver
+    email = serializers.EmailField(write_only=True)
+    full_name = serializers.SerializerMethodField()
+    company_name = serializers.SerializerMethodField()
+    company = serializers.PrimaryKeyRelatedField(queryset=Company.objects.all())
+    created_by = serializers.HiddenField(default=serializers.CurrentUserDefault())
 
     class Meta:
         model = DriverProfile
-        fields = ["id", "email", "company", "license_number", "home_terminal", "deleted", "full_name", "created_by"]
+        fields = ["id", "email", "company", "license_number", "company_name", "home_terminal", "deleted", "full_name", "created_by"]
 
     def get_full_name(self, obj):
         return obj.user.get_full_name()
+    
+    def get_company_name(self, obj):
+        return obj.company.name
 
     def create(self, validated_data):
         email = validated_data.pop("email")
         user = User.objects.filter(email=email).first()
 
-        try:
-            deleted = validated_data.pop("deleted")
-            if deleted:
-                raise serializers.ValidationError({"Deleted": "Inactive drivers can not be created"})
-        except:
-            pass
+        if validated_data.pop("deleted", False):
+            raise serializers.ValidationError({"Deleted": "Inactive drivers cannot be created."})
 
         if not user:
             raise serializers.ValidationError({"email": "Driver with this email was not found."})
