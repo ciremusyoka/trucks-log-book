@@ -53,11 +53,16 @@ class DriverProfileViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated, IsDriverCompanyAdmin, UserIsCompanyAdmin]
 
     def get_queryset(self):
-        """Only return drivers for the company where the authenticated user is an admin."""
+        """Filter vehicles by company admins or assigned drivers."""
         user = self.request.user
-        return DriverProfile.objects.filter(
-            models.Q(user=user) | models.Q(company__admins=user)
-        ).distinct()
+        return (
+            DriverProfile.objects.filter(
+                models.Q(user=user) | models.Q(company__admins=user)
+            )
+            .select_related("user")
+            .prefetch_related("company__admins")
+            .distinct()
+        )
 
     def perform_destroy(self, instance):
         """Soft delete a driver instead of hard deleting."""
@@ -81,12 +86,9 @@ class DriverProfileViewSet(viewsets.ModelViewSet):
     def profile(self, request):
         """Retrieve the authenticated user's driver profile."""
         user = request.user
-        try:
-            driver_profile = DriverProfile.objects.get(user=user, deleted=False)
-            serializer = self.get_serializer(driver_profile)
-            return Response(serializer.data)
-        except DriverProfile.DoesNotExist:
-            return Response({"message": "Driver profile not found."}, status=404)
+        driver_profile = get_object_or_404(DriverProfile, user=user, deleted=False)
+        serializer = self.get_serializer(driver_profile)
+        return Response(serializer.data)
 
 class VehicleViewSet(viewsets.ModelViewSet):
     queryset = Vehicle.objects.all()
