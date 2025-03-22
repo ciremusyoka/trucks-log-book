@@ -34,8 +34,12 @@ class TripSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Driver must be assigned to the vehicle.")
 
         # Has ongoing trip?
-        if method == "POST" and Trip.objects.filter(driver=driver, status="Ongoing").exists():
-            raise serializers.ValidationError("Driver already has an ongoing trip.")
+        if method == "POST":
+            if Trip.objects.filter(driver=driver, status="Ongoing").exists():
+                raise serializers.ValidationError("Driver already has an ongoing trip.")
+            
+            if Trip.objects.filter(vehicle=vehicle, status="Ongoing").exists():
+                raise serializers.ValidationError("Truck already has an ongoing trip.")
 
         return data
 
