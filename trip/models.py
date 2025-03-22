@@ -37,3 +37,27 @@ class Trip(models.Model):
     def __str__(self):
         return f"Trip {self.manifest_no} - {self.status}"
 
+
+class TripLogEntry(models.Model):
+    OFF_DUTY = "OFF_DUTY"
+    SLEEPER_BERTH = "SLEEPER_BERTH"
+    DRIVING = "DRIVING"
+    ON_DUTY = "ON_DUTY"
+
+    CATEGORY_CHOICES = [
+        (OFF_DUTY, "Off Duty"),
+        (SLEEPER_BERTH, "Sleeper Berth"),
+        (DRIVING, "Driving"),
+        (ON_DUTY, "On Duty (Not Driving)"),
+    ]
+
+    trip = models.ForeignKey(Trip, on_delete=models.CASCADE, related_name="log_entries")
+    category = models.CharField(max_length=30, choices=CATEGORY_CHOICES)
+    remarks = models.TextField(blank=True)
+    location = models.JSONField()
+    odm_reading = models.PositiveIntegerField(null=True, blank=True)
+    date_created = models.DateTimeField()
+    deleted = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Log Entry for {self.trip.manifest_no} - {self.category}"

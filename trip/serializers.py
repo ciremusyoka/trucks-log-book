@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Trip
+from .models import Trip, TripLogEntry
 
 class TripSerializer(serializers.ModelSerializer):
     start_date = serializers.ReadOnlyField()
@@ -43,3 +43,33 @@ class TripSerializer(serializers.ModelSerializer):
 
         return data
 
+
+class TripLogEntrySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TripLogEntry
+        fields = "__all__"
+
+    def validate(self, data):
+        request = self.context.get("request")
+        if not request or not request.user:
+            raise serializers.ValidationError("Authentication required.")
+
+        user = request.user
+        instance = self.instance
+
+        trip = data.get("trip", instance.trip if instance else None)
+        category = data.get("category", instance.category if instance else None)
+        odm_reading = data.get("odm_reading", instance.odm_reading if instance else None)
+
+        if not trip:
+            raise serializers.ValidationError("Trip is required.")
+
+        # Is trip driver or a company admin?
+        if not (trip.driver.user == user or trip.company.admins.filter(id=user.id).exists()):
+            raise serializers.ValidationError("You must be the trip driver or a company admin.")
+
+        # `odm_reading` is provided for `SLEEPER_BERTH`?
+        if category in {TripLogEntry.SLEEPER_BERTH, TripLogEntry.OFF_DUTY} and odm_reading is None:
+            raise serializers.ValidationError(f"Odometer reading is required for {category}.")
+
+        return data
