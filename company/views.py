@@ -54,7 +54,10 @@ class DriverProfileViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Only return drivers for the company where the authenticated user is an admin."""
-        return DriverProfile.objects.filter(company__admins=self.request.user)
+        user = self.request.user
+        return DriverProfile.objects.filter(
+            models.Q(user=user) | models.Q(company__admins=user)
+        ).distinct()
 
     def perform_destroy(self, instance):
         """Soft delete a driver instead of hard deleting."""
@@ -73,6 +76,17 @@ class DriverProfileViewSet(viewsets.ModelViewSet):
             return Response({"message": "Driver has been restored successfully."}, status=200)
 
         return Response({"message": "Driver is already active."}, status=400)
+    
+    @action(detail=False, methods=["get"], permission_classes=[permissions.IsAuthenticated])
+    def profile(self, request):
+        """Retrieve the authenticated user's driver profile."""
+        user = request.user
+        try:
+            driver_profile = DriverProfile.objects.get(user=user, deleted=False)
+            serializer = self.get_serializer(driver_profile)
+            return Response(serializer.data)
+        except DriverProfile.DoesNotExist:
+            return Response({"message": "Driver profile not found."}, status=404)
 
 class VehicleViewSet(viewsets.ModelViewSet):
     queryset = Vehicle.objects.all()
@@ -82,7 +96,9 @@ class VehicleViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Filter vehicles by company admins or assigned drivers."""
         user = self.request.user
-        return Vehicle.objects.filter(models.Q(drivers__user=user) | models.Q(company__admins=user)).distinct()
+        return Vehicle.objects.filter(
+            models.Q(drivers__user=user) | models.Q(company__admins=user)
+        ).distinct()
 
     def perform_destroy(self, instance):
         """Soft delete: Set operational to False instead of deleting."""
