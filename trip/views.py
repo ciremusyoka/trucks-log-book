@@ -35,6 +35,46 @@ class TripViewSet(viewsets.ModelViewSet):
         instance.deleted = True
         instance.save()
 
+    @action(detail=True, methods=["get"], permission_classes=[permissions.IsAuthenticated, IsCompanyAdminOrTripDriver])
+    def logs(self, request, pk=None):
+        """Retrieve all log entries for a specific trip."""
+        trip = self.get_object()
+        logs = trip.log_entries.select_related("trip", "trip__driver").all()
+        serializer = TripLogEntrySerializer(logs, many=True)
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @action(detail=True, methods=["get"])
+    def logs_time_series(self, request, pk=None):
+        """Return grouped trip logs as a time series."""
+        trip = self.get_object()
+        logs = trip.log_entries.filter(deleted=False).annotate(date=TruncDate("date_created")).order_by("date_created")
+        grouped_logs = {}
+        previous_data = {'category': TripLogEntry.OFF_DUTY}
+        log_date = None
+
+        for log in logs:
+            log_date = log.date
+            if log_date not in grouped_logs:
+                start_of_day = make_aware(datetime.combine(log_date, datetime.min.time()))
+                previous_data['date_created'] = start_of_day
+                grouped_logs[log_date] = []
+            
+            grouped_logs[log_date].append({
+                **previous_data,
+                "from": previous_data['date_created'],
+                "to": log.date_created,
+            })
+            previous_data = log.__dict__
+            previous_data.pop('_state')
+        
+        grouped_logs[log_date].append({
+            **previous_data,
+            "from": previous_data['date_created'],
+            "to": make_aware(datetime.combine(log_date, datetime.max.time())),
+        })
+
+        return Response({str(date): series for date, series in grouped_logs.items()})
 
 class TripLogEntryViewSet(viewsets.ModelViewSet):
     """Manage trip log entries, accessible only by trip drivers or company admins."""
