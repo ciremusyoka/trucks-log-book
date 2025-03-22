@@ -3,10 +3,20 @@ from .models import Trip, TripLogEntry
 
 class TripSerializer(serializers.ModelSerializer):
     start_date = serializers.ReadOnlyField()
+    last_odm_reading = serializers.SerializerMethodField()
     
     class Meta:
         model = Trip
         fields = "__all__"
+
+    def get_last_odm_reading(self, obj):
+        """Fetch the latest odm_reading from trip logs."""
+        last_log = (
+            TripLogEntry.objects.filter(trip=obj, odm_reading__isnull=False)
+            .order_by("-date_created")
+            .first()
+        )
+        return last_log.odm_reading if last_log else None
 
     def validate(self, data):
         request = self.context.get("request")
