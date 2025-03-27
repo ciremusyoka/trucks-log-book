@@ -67,11 +67,12 @@ class TripViewSet(viewsets.ModelViewSet):
             })
             previous_data = log.__dict__
             previous_data.pop('_state')
-        
+
+        complete = previous_data["category"] in [TripLogEntry.SLEEPER_BERTH, TripLogEntry.OFF_DUTY]
         grouped_logs[log_date].append({
             **previous_data,
             "from": previous_data['date_created'],
-            "to": make_aware(datetime.combine(log_date, datetime.max.time())),
+            "to": make_aware(datetime.combine(log_date, datetime.max.time())) if complete  else previous_data['date_created'],
         })
 
         return Response({str(date): series for date, series in grouped_logs.items()})

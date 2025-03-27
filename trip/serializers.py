@@ -1,9 +1,29 @@
 from rest_framework import serializers
+
+from company.models import Company, DriverProfile, Vehicle
 from .models import Trip, TripLogEntry
+
+class CompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = ["id", "name", "main_office_address"]
+
+class DriverSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DriverProfile
+        fields = ["id", "home_terminal", "license_number"]
+
+class VehicleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vehicle
+        fields = ["id", "license_plate", "truck_number", "license_plate"]
 
 class TripSerializer(serializers.ModelSerializer):
     start_date = serializers.ReadOnlyField()
     last_odm_reading = serializers.SerializerMethodField()
+    vehicle = VehicleSerializer()
+    company = CompanySerializer()
+    driver = DriverSerializer()
     
     class Meta:
         model = Trip

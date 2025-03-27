@@ -5,7 +5,7 @@ from .views import TripViewSet, TripLogEntryViewSet
 # Create a router and register the CompanyViewSet
 router = DefaultRouter()
 router.register(r'trips', TripViewSet, basename='trips')
-router.register(r'trip_logs', TripLogEntryViewSet, basename='trip_logs')
+router.register(r'trip-logs', TripLogEntryViewSet, basename='trip_logs')
 
 urlpatterns = [
     path('', include(router.urls)),
