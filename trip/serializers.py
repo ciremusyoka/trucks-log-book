@@ -21,9 +21,9 @@ class VehicleSerializer(serializers.ModelSerializer):
 class TripSerializer(serializers.ModelSerializer):
     start_date = serializers.ReadOnlyField()
     last_odm_reading = serializers.SerializerMethodField()
-    vehicle = VehicleSerializer()
-    company = CompanySerializer()
-    driver = DriverSerializer()
+    vehicle = serializers.PrimaryKeyRelatedField(queryset=Vehicle.objects.all(), write_only=True)
+    company = serializers.PrimaryKeyRelatedField(queryset=Company.objects.all(), write_only=True)
+    driver = serializers.PrimaryKeyRelatedField(queryset=DriverProfile.objects.all(), write_only=True)
     
     class Meta:
         model = Trip
@@ -72,6 +72,14 @@ class TripSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Truck already has an ongoing trip.")
 
         return data
+    
+    def to_representation(self, instance):
+        """Use nested serializers when returning data (GET requests)."""
+        representation = super().to_representation(instance)
+        representation["vehicle"] = VehicleSerializer(instance.vehicle).data
+        representation["company"] = CompanySerializer(instance.company).data
+        representation["driver"] = DriverSerializer(instance.driver).data
+        return representation
 
 
 class TripLogEntrySerializer(serializers.ModelSerializer):

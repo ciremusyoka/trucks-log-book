@@ -48,7 +48,7 @@ class DriverProfileSerializer(serializers.ModelSerializer):
         if DriverProfile.objects.filter(user=user, company=company).exists():
             raise serializers.ValidationError("This driver is already assigned to the company.")
 
-        return DriverProfile.objects.create(user=user, created_by=self.context["request"].user **validated_data)
+        return DriverProfile.objects.create(user=user, **validated_data)
 
 
 class VehicleSerializer(serializers.ModelSerializer):
