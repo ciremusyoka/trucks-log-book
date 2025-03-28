@@ -40,7 +40,7 @@ This Django project is designed to track ruck logs and manage workflow efficient
 1. Clone the repository:
    ```sh
    git clone https://github.com/ciremusyoka/trucks-log-book.git
-   cd ruck-logs
+   cd trucks-log-book
    ```
 2. Create a virtual environment:
    ```sh

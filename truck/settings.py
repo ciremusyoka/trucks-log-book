@@ -25,11 +25,11 @@ SECRET_KEY = 'django-insecure-u=v_yxm5fx#+4*-1c_7w617y#%5p(crm&yl_^s-tt(kpw@5g%@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "http://localhost:3000"]
+ALLOWED_HOSTS = ["localhost", "127.0.0.1", "http://localhost:3000", "trucks-log-api.onrender.com"]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "https://yourfrontend.com",
+    "https://trucks-log-api.onrender.com",
 ]
 
 
