@@ -34,10 +34,9 @@ DEBUG = str_to_bool(os.getenv('DEBUG_MODE', 'False'))
 
 ALLOWED_HOSTS = ["localhost", "127.0.0.1", "http://localhost:3000", "trucks-log-api.onrender.com"]
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "https://trucks-log-api.onrender.com",
-]
+CORS_ALLOWED_ORIGINS = CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+
+print("CORS_ALLOWED_ORIGINS", CORS_ALLOWED_ORIGINS)
 
 
 # Application definition
